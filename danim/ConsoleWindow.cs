@@ -9,6 +9,7 @@ using danim;
 using Component = danim.Component;
 using System.Windows.Forms;
 using System.Security.Cryptography.X509Certificates;
+using Button = danim.Button;
 
 public static class ConsoleWindow
 {
@@ -53,8 +54,6 @@ public static class ConsoleWindow
 
     public static void QuickEditMode(bool Enable)
     {
-        //QuickEdit lets the user select text in the console window with the mouse, to copy to the windows clipboard.
-        //But selecting text stops the console process (e.g. unzipping). This may not be always wanted.
         IntPtr consoleHandle = NativeFunctions.GetStdHandle((int)NativeFunctions.StdHandle.STD_INPUT_HANDLE);
         UInt32 consoleMode;
 
@@ -173,11 +172,22 @@ public static class ConsoleWindow
         public MouseButton ClickedButton { get; }
     }
 
-    // Declare the delegate (if using non-generic pattern).
-    public delegate void OnClickEventHandler(object sender, OnClickEventArgs e);
 
-    // Declare the event.
+    public delegate void OnClickEventHandler(object sender, OnClickEventArgs e);
     public static event OnClickEventHandler OnClickEvent;
+
+
+    public class OnKeyEventArgs
+    {
+        public OnKeyEventArgs(char Key,int KeyCode) { this.Key = Key; this.KeyCode = KeyCode; }
+        public char Key { get; }
+        public int KeyCode { get; }
+
+    }
+
+  
+    public delegate void OnKeyEvent(object sender, OnKeyEventArgs e);
+    public static event OnKeyEvent OnKey;
 
 
     public static Position MousePosition = new Position(0, 0);
@@ -185,24 +195,93 @@ public static class ConsoleWindow
 
     private static void ConsoleWindow_OnClickEvent(object sender, OnClickEventArgs e)
     {
-        Console.Title = e.ClickedPosition.x + $" [{e.ClickedButton.ToString()}] " + e.ClickedPosition.y;
+        //Console.Title = e.ClickedPosition.x + $" [{e.ClickedButton.ToString()}] " + e.ClickedPosition.y;
 
         Component ClickedComponent = Root.CurrentRoot.CheckPosition(e.ClickedPosition);
 
+     
 
-        if(ClickedComponent != null)
+        if (ClickedComponent != null)
         {
+            if(LastFocused != null)
+            {
+                if (!LastFocused.Equals(ClickedComponent))
+                {
+                    LastFocused.Unfocus();
+                    
+                }
+
+            }
+
+            LastFocused = ClickedComponent;
             ClickedComponent.Click(e);
+        }
+        else
+        {
+            LastFocused?.Unfocus();
+            LastFocused = null;
         }
 
 
     }
+
+    private static void ConsoleWindow_OnKey(object sender, OnKeyEventArgs e)
+    {
+        // 8 == Backspace
+        // 32 == Space
+        // 13 == Enter
+
+        if(LastFocused != null)
+        {
+            if(LastFocused.ComponentType == typeof(Input))
+            {
+
+                var input = (Input)LastFocused;
+                if (LastFocused.Text.Trim() != "")
+                {
+                    if (e.KeyCode == 8)
+                    {
+                        
+                        LastFocused.Text = LastFocused.Text.Remove(LastFocused.Text.Length - 1);
+
+                        if(LastFocused.Text == "") { LastFocused.Text = new string(' ', input.Width); }
+                    }
+                    else if(e.KeyCode == 20) { return; }
+                    else
+                    {
+                        if(input.Text.Length >= input.Width)
+                        {
+                            return;
+                        }
+                        LastFocused.Text += e.Key;
+                    }
+                    
+                }
+                else
+                {
+                    if (e.KeyCode != 8 && e.KeyCode != 20)
+                    {
+                        LastFocused.Text = e.Key.ToString();
+
+                    }
+                    
+                }
+
+            }
+        }
+
+    }
+
+    public static bool isPressing = false;
     public static bool isHovering = false;
     private static Component LastHovered = null;
+    public static Component LastFocused = null;
+
 
     public async static void ListenConsole()
     {
         OnClickEvent += ConsoleWindow_OnClickEvent;
+        OnKey += ConsoleWindow_OnKey;
 
         var handle = NativeMethods.GetStdHandle(NativeMethods.STD_INPUT_HANDLE);
 
@@ -241,6 +320,13 @@ public static class ConsoleWindow
                                 HoverComp.Color = ConsoleColor.DarkGreen;
                                 isHovering = true;
                             }
+                            else if(HoverComp.ComponentType == typeof(Button))
+                            {
+                                if (LastHovered != null) { LastHovered.Color = ConsoleColor.White; }
+                                LastHovered = HoverComp;
+                                HoverComp.Color = ConsoleColor.DarkGreen;
+                                isHovering = true;
+                            }
                            
                         }
                         else
@@ -266,11 +352,14 @@ public static class ConsoleWindow
 
                 case NativeMethods.KEY_EVENT:
                     {
-                       
-                        //Console.WriteLine(string.Format("    bKeyDown  .......:  {0,5}  ", record.KeyEvent.bKeyDown));
+                        isPressing = record.KeyEvent.bKeyDown;
+                        if(record.KeyEvent.bKeyDown)
+                        {
+                            OnKey?.Invoke(null,new OnKeyEventArgs(record.KeyEvent.UnicodeChar,record.KeyEvent.wVirtualKeyCode));
+                        }
                         //Console.WriteLine(string.Format("    wRepeatCount ....:   {0,4:0}  ", record.KeyEvent.wRepeatCount));
-                        //Console.WriteLine(string.Format("    wVirtualKeyCode .:   {0,4:0}  ", record.KeyEvent.wVirtualKeyCode));
-                        //Console.WriteLine(string.Format("    uChar ...........:      {0}  ", record.KeyEvent.UnicodeChar));
+                        Console.Title = string.Format("    wVirtualKeyCode .:   {0,4:0}  ", record.KeyEvent.wVirtualKeyCode);
+                        //Console.Title = string.Format("    uChar ...........:      {0}  ", record.KeyEvent.UnicodeChar);
                         //Console.WriteLine(string.Format("    dwControlKeyState: 0x{0:X4}  ", record.KeyEvent.dwControlKeyState));
 
                         if (record.KeyEvent.wVirtualKeyCode == (int)ConsoleKey.Escape) { return; }
@@ -278,10 +367,9 @@ public static class ConsoleWindow
                     break;
             }
 
-            await Task.Delay(10);
+            await Task.Delay(1);
         }
     }
-
 
 
     private class NativeMethods

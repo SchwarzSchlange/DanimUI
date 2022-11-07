@@ -7,7 +7,7 @@
     <ProjectGuid>{D907EC1F-B24C-4FEE-9BE2-3BD7691B3A6B}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>danim</RootNamespace>
-    <AssemblyName>danim</AssemblyName>
+    <AssemblyName>DanimUI</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -32,6 +32,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>danim.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -44,9 +50,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Button.cs" />
     <Compile Include="Component.cs" />
     <Compile Include="ConsoleHandler.cs" />
     <Compile Include="ConsoleWindow.cs" />
+    <Compile Include="Input.cs" />
     <Compile Include="Page.cs" />
     <Compile Include="Seperator.cs" />
     <Compile Include="ListLabel.cs" />
@@ -58,6 +66,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="favicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

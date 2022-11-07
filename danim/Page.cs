@@ -25,6 +25,11 @@ namespace danim
             Root.CurrentRoot.Pages.Find(x => x.PageName == Name)?.Load();
         }
 
+        public static Page Get(string Name)
+        {
+            return Root.CurrentRoot.Pages.Find(x => x.PageName == Name);
+        }
+
         public void Load()
         {
             Console.Clear();

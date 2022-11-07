@@ -75,6 +75,22 @@ namespace danim
             }
         }
 
+        public void ShowMessage(Page Redirect,string title,string content)
+        {
+            Page message = new Page("message");
+
+            message.Add(new Label("title", new Position(0, 0), title, false,ConsoleColor.Cyan).Center());
+            message.Add(new Seperator(new Position(0, 1)));
+            message.Add(new Label("content", Auto(), content, false).Center());
+            message.Add(new Button("backBtn", Auto(), "Okay", true).Center());
+
+            message.Load();
+            Component.Find<Button>("backBtn").OnClickEvent += (object sender,ConsoleWindow.OnClickEventArgs args)=>{
+                Redirect.Load();
+            };
+        }
+
+
         public Component CheckPosition(Position position)
         {
             foreach(var comp in CurrentPage.components)
@@ -95,6 +111,7 @@ namespace danim
 
 
         public Component LastAddedComponent = null;
+
         public Position Auto()
         {
             if(LastAddedComponent != null)
@@ -122,7 +139,7 @@ namespace danim
             }
          
         }
-        private void Update()
+        public void Update()
         {
             if(CurrentPage == null) { return; }
             var x = new List<Component>();
@@ -134,13 +151,14 @@ namespace danim
 
             foreach(Component comp in x)
             {
+
+
                 Write(new Position(comp.position.x, comp.position.y), new string(' ', Root.CurrentRoot.Width));
                 Console.ForegroundColor = comp.Color;
                 if (comp.ComponentType == typeof(Label) || comp.ComponentType == typeof(ListLabel))
                 {
                     Write(comp.position, comp.Text);
                 }
-                
                 else if(comp.ComponentType == typeof(Seperator))
                 {
                     Seperator seperator = (Seperator)comp;
@@ -148,8 +166,37 @@ namespace danim
                     Write(new Position(1,comp.position.y), new string('█', Root.CurrentRoot.Width-1));
                     
                 }
-                Console.ForegroundColor = ConsoleColor.White;
+                else if(comp.ComponentType == typeof(Input))
+                {
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Input input = (Input)comp;
 
+                    Write(comp.position, comp.Text);
+
+                    int diff = input.Width - comp.Text.Length;
+                    if (diff > 0)
+                    {
+                        Console.Write(new string(' ',diff));
+                    }
+                    else
+                    {
+                        diff = 0;
+                    }
+                   
+                }
+                else if(comp.ComponentType == typeof(Button))
+                {
+                    Console.BackgroundColor = ConsoleColor.Blue;
+                    Write(comp.position, comp.Text);
+                }
+
+                if(comp.AlwaysUpdate)
+                {
+                    comp.UpdateBufferArea();
+                }
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.BackgroundColor = ConsoleColor.Black;
             }
         }
 

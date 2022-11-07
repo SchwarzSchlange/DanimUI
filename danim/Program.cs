@@ -11,49 +11,32 @@ namespace danim
     {
         static void Main(string[] args)
         {
-            Root window = new Root("Window", 30,10,100);
-            //Page Menu
-            Page Menu = new Page("menu");
-            
-            Menu.Add(new Label("headr", new Position(0,0), "Welcome To Window",ConsoleColor.Green).Center());
-            Menu.Add(new Seperator(window.Auto()));
-            var mainSection = new ListLabel("s_mainmenu", window.Auto(), "Main Menu");
-            var exitSection = new ListLabel("s_exit", window.Auto(), "Exit");
-            Menu.Add(mainSection);
-            Menu.Add(exitSection);
+            Root window = new Root("DanimUI", 50,10,100);
 
-            Menu.Load();
-
-            mainSection.OnClickEvent += (object obj, ConsoleWindow.OnClickEventArgs e) =>
-            {
-                Page.Load("main");
-            };
-
-            exitSection.OnClickEvent += (object obj, ConsoleWindow.OnClickEventArgs e) =>
-            {
-                Environment.Exit(0);
-            };
-
-            //Page Menu
-
-            //Main Menu
-            Page MainPage = new Page("main");
-
-            MainPage.Add(new Label("headr", new Position(0, 0), "Main Menu"));
-            MainPage.Add(new Seperator(new Position(0, 0)));
-
-            var backSection = new ListLabel("s_back", new Position(0, 1), "Back");
-
-            MainPage.Add(backSection);
+            Page LoginPage = new Page("login");
+            LoginPage.Add(new Label("pageHeader", new Position(0, 0), "Login",false,ConsoleColor.DarkYellow).Center());
+            LoginPage.Add(new Seperator(new Position(0,1)));
+            LoginPage.Add(new Input("passcode", 49, new Position(1,2),true,"Enter the passcode..."));
+            var loginBtn = new Button("enter", window.Auto(),"Enter").Center();
+            loginBtn.OnClickEvent += LoginBtn_OnClickEvent;
+            LoginPage.Add(loginBtn);
+            LoginPage.Load();
 
 
-            backSection.OnClickEvent += (object obj, ConsoleWindow.OnClickEventArgs e) =>
-            {
-                Menu.Load();
-            };
-
-            //Main Menu
         }
 
+        private static void LoginBtn_OnClickEvent(object sender, ConsoleWindow.OnClickEventArgs e)
+        {
+
+            var inp = Component.Find<Input>("passcode");
+            if(inp.Text == "123")
+            {
+                Root.CurrentRoot.ShowMessage(Page.Get("login"),"Login","Succesfully logined!");
+            }
+            else
+            {
+                Root.CurrentRoot.ShowMessage(Page.Get("login"), "Login", "The passcode is wrong try another one...");
+            }
+        }
     }
 }
