@@ -25,7 +25,27 @@ namespace danim
             if(other.x == this.x && other.y == this.y) { return true; }
             return base.Equals(obj);
         }
-   
+
+        public static Position operator +(Position a, Position b)
+        {
+            return new Position(a.x + b.x, a.y + b.y);
+        }
+
+        public static Position operator *(Position a, Position b)
+        {
+            return new Position(a.x * b.x, a.y * b.y);
+        }
+
+        public static Position operator -(Position a, Position b)
+        {
+            return new Position(a.x - b.x, a.y - b.y);
+        }
+
+        public static Position operator /(Position a, Position b)
+        {
+            return new Position(a.x / b.x, a.y / b.y);
+        }
+
 
     }
 }

@@ -197,11 +197,11 @@ public static class ConsoleWindow
     {
         //Console.Title = e.ClickedPosition.x + $" [{e.ClickedButton.ToString()}] " + e.ClickedPosition.y;
 
-        Component ClickedComponent = Root.CurrentRoot.CheckPosition(e.ClickedPosition);
+        Component ClickedComponent = Root.CurrentRoot.CheckPosition(Root.CurrentRoot.CurrentPage.components,e.ClickedPosition);
 
      
 
-        if (ClickedComponent != null)
+        if (ClickedComponent != null && ClickedComponent.Visible && ClickedComponent.Enabled)
         {
             if(LastFocused != null)
             {
@@ -230,10 +230,12 @@ public static class ConsoleWindow
         // 8 == Backspace
         // 32 == Space
         // 13 == Enter
+        // 37 = <<
+        // 39 = >>
 
         if(LastFocused != null)
         {
-            if(LastFocused.ComponentType == typeof(Input))
+            if(LastFocused.ComponentType == typeof(Input) && LastFocused.Visible && LastFocused.Enabled)
             {
 
                 var input = (Input)LastFocused;
@@ -241,27 +243,37 @@ public static class ConsoleWindow
                 {
                     if (e.KeyCode == 8)
                     {
-                        
-                        LastFocused.Text = LastFocused.Text.Remove(LastFocused.Text.Length - 1);
 
-                        if(LastFocused.Text == "") { LastFocused.Text = new string(' ', input.Width); }
+                        LastFocused.SetText(LastFocused.Text.Remove(LastFocused.Text.Length - 1));
+
+                        if (LastFocused.Text == "")
+                        {
+                            LastFocused.SetText(new string(' ', input.Width));
+                        }
                     }
-                    else if(e.KeyCode == 20) { return; }
+                    else if (e.KeyCode == 20 || e.KeyCode == 16) { return; }
                     else
                     {
-                        if(input.Text.Length >= input.Width)
+
+                        if (input.Text.Length >= input.Width - 1)
                         {
-                            return;
+
+                            string test = (string)LastFocused.Text.Clone();
+                            LastFocused.SetText(test.Substring(input.StartIndex, input.Width - input.StartIndex - 1));
                         }
-                        LastFocused.Text += e.Key;
+
+
+                        LastFocused.SetText(LastFocused.Text + e.Key.ToString());
+
+
                     }
                     
                 }
                 else
                 {
-                    if (e.KeyCode != 8 && e.KeyCode != 20)
+                    if (e.KeyCode != 8 && e.KeyCode != 20 && e.KeyCode != 16 && e.KeyCode != 37 && e.KeyCode != 39)
                     {
-                        LastFocused.Text = e.Key.ToString();
+                        LastFocused.SetText(e.Key.ToString());
 
                     }
                     
@@ -273,6 +285,7 @@ public static class ConsoleWindow
     }
 
     public static bool isPressing = false;
+    public static bool isClicking = false;
     public static bool isHovering = false;
     private static Component LastHovered = null;
     public static Component LastFocused = null;
@@ -302,51 +315,81 @@ public static class ConsoleWindow
         while (true)
         {
             if (!(NativeMethods.ReadConsoleInput(handle, ref record, 1, ref recordLen))) { throw new Win32Exception(); }
-            Console.SetCursorPosition(0, 0);
+
+
             switch (record.EventType)
             {
                 case NativeMethods.MOUSE_EVENT:
                     {
-               
-                        MousePosition.x = record.MouseEvent.dwMousePosition.X;
-                        MousePosition.y = record.MouseEvent.dwMousePosition.Y;
-                        Component HoverComp = Root.CurrentRoot.CheckPosition(MousePosition);
-                        if (HoverComp != null)
+                        try
                         {
-                            if(HoverComp.ComponentType == typeof(ListLabel))
+                            if(Root.CurrentRoot.CurrentPage == null) { continue; }
+                            MousePosition.x = record.MouseEvent.dwMousePosition.X;
+                            MousePosition.y = record.MouseEvent.dwMousePosition.Y;
+                            Component HoverComp = Root.CurrentRoot.CheckPosition(Root.CurrentRoot.CurrentPage.components, MousePosition);
+                            if (HoverComp != null && HoverComp.Visible && HoverComp.Enabled)
                             {
-                                if(LastHovered != null) { LastHovered.Color = ConsoleColor.White; }
-                                LastHovered = HoverComp;
-                                HoverComp.Color = ConsoleColor.DarkGreen;
-                                isHovering = true;
-                            }
-                            else if(HoverComp.ComponentType == typeof(Button))
-                            {
-                                if (LastHovered != null) { LastHovered.Color = ConsoleColor.White; }
-                                LastHovered = HoverComp;
-                                HoverComp.Color = ConsoleColor.DarkGreen;
-                                isHovering = true;
-                            }
-                           
-                        }
-                        else
-                        {
-                            isHovering = false;
-                            if (LastHovered != null && !isHovering)
-                            {
-                                LastHovered.Color = ConsoleColor.White;
-                                LastHovered = null;
-                            }
-                        }
+                                if (HoverComp.ComponentType == typeof(ListLabel))
+                                {
+                                    if (LastHovered != null) { LastHovered.Color = ConsoleColor.White; }
+                                    LastHovered = HoverComp;
+                                    HoverComp.Color = ConsoleColor.DarkGreen;
+                                    isHovering = true;
+                                }
+                                else if (HoverComp.ComponentType == typeof(Button))
+                                {
+                                    if (LastHovered != null) { LastHovered.Color = ConsoleColor.White; }
+                                    LastHovered = HoverComp;
+                                    HoverComp.Color = ConsoleColor.Black;
 
-                        if (record.MouseEvent.dwButtonState == 0x01)
-                        {
-                            OnClickEvent?.Invoke(null, new OnClickEventArgs(MousePosition, MouseButton.LeftMouseButton));
+                                    isHovering = true;
+                                }
+                                /*
+                                else if(HoverComp.ComponentType == typeof(Box))
+                                {
+                                    var box = (Box)HoverComp;   
+                                    if(record.MouseEvent.dwButtonState == 0x01)
+                                    {
+
+                                        var DragPosition = new Position(MousePosition.x, MousePosition.y);
+                                        HoverComp.position = DragPosition;
+
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+                                }
+                                */
+
+                            }
+                            else
+                            {
+                                isHovering = false;
+                                if (LastHovered != null && !isHovering)
+                                {
+                                    LastHovered.Color = ConsoleColor.White;
+                                    LastHovered = null;
+                                }
+                            }
+
+                            if (record.MouseEvent.dwButtonState == 0x01)
+                            {
+
+                                OnClickEvent?.Invoke(null, new OnClickEventArgs(MousePosition, MouseButton.LeftMouseButton));
+                                await Task.Delay(100);
+
+                            }
+
+                            //Console.Title = string.Format("    dwButtonState ...: 0x{0:X4}  ", record.MouseEvent.dwButtonState);
+                            //Console.Title = string.Format("    dwControlKeyState: 0x{0:X4}  ", record.MouseEvent.dwControlKeyState);
+                            //Console.Title = string.Format("    dwEventFlags ....: 0x{0:X4}  ", record.MouseEvent.dwEventFlags);
                         }
-                        
-                        //Console.WriteLine(string.Format("    dwButtonState ...: 0x{0:X4}  ", record.MouseEvent.dwButtonState));
-                        //Console.WriteLine(string.Format("    dwControlKeyState: 0x{0:X4}  ", record.MouseEvent.dwControlKeyState));
-                        //Console.WriteLine(string.Format("    dwEventFlags ....: 0x{0:X4}  ", record.MouseEvent.dwEventFlags));
+                        catch
+                        {
+                            continue;
+                        }
+                      
                     }
                     break;
 

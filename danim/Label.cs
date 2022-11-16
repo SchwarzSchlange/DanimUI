@@ -8,10 +8,9 @@ namespace danim
 {
     public class Label : Component
     {
-
         public Label(string name,Position position, string text,bool UpdateBufferArea = false,ConsoleColor Color = ConsoleColor.White) : base(name, position,typeof(Label),text,UpdateBufferArea,Color)
         {
-
+            SetText(text);
         }
     }
 }

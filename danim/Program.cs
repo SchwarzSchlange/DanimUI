@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,32 +12,36 @@ namespace danim
     {
         static void Main(string[] args)
         {
-            Root window = new Root("DanimUI", 50,10,100);
+            Root window = new Root("Test Menu", 40,20,100);
 
-            Page LoginPage = new Page("login");
-            LoginPage.Add(new Label("pageHeader", new Position(0, 0), "Login",false,ConsoleColor.DarkYellow).Center());
-            LoginPage.Add(new Seperator(new Position(0,1)));
-            LoginPage.Add(new Input("passcode", 49, new Position(1,2),true,"Enter the passcode..."));
-            var loginBtn = new Button("enter", window.Auto(),"Enter").Center();
-            loginBtn.OnClickEvent += LoginBtn_OnClickEvent;
-            LoginPage.Add(loginBtn);
-            LoginPage.Load();
+            Page MainPage = new Page("File Content Shower");
+
+            Box box = new Box("box", new Position(0, 0), new Size(window.Width,window.Height), "Unknown File");
+            Input pathput = new Input("pathput", box.MaxWidth(), new Position(1, 1), true, "Enter File Path...");
+            Button ofb = new Button("openfileButton", new Position(1, 2), "Open File");
+            Seperator seperator = new Seperator(new Position(1,3));
+            Label content = new Label("contentLabel", new Position(1, 4), "");
+            box.Add(pathput,seperator,content,ofb);
+            ofb.Center();
+  
 
 
-        }
-
-        private static void LoginBtn_OnClickEvent(object sender, ConsoleWindow.OnClickEventArgs e)
-        {
-
-            var inp = Component.Find<Input>("passcode");
-            if(inp.Text == "123")
+            
+        
+            ofb.OnClickEvent += (object sender, ConsoleWindow.OnClickEventArgs e) =>
             {
-                Root.CurrentRoot.ShowMessage(Page.Get("login"),"Login","Succesfully logined!");
-            }
-            else
-            {
-                Root.CurrentRoot.ShowMessage(Page.Get("login"), "Login", "The passcode is wrong try another one...");
-            }
+                if(pathput.Text == "") { window.ShowMessage("Path", "Please enter a path");return; }
+                if (!File.Exists(pathput.Text)) { window.ShowMessage("Error", $"'{pathput.Text}' doestn't exitsts!");return; }
+                box.Title = pathput.Text;
+                content.SetText(File.ReadAllText(pathput.Text));
+                
+            };
+
+  
+            MainPage.Add(box,ofb);
+            MainPage.Load();
+
+   
         }
     }
 }

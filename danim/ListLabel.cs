@@ -11,7 +11,7 @@ namespace danim
 
         public ListLabel(string name,Position position, string text,bool UpdateBufferArea = true,ConsoleColor Color = ConsoleColor.White) : base(name, position,typeof(ListLabel), " • " + text,UpdateBufferArea,Color)
         {
-            this.Text = $" • " +text;
+            SetText($" • " +text);
         }
     }
 }

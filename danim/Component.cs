@@ -11,11 +11,17 @@ namespace danim
 {
     public  class Component
     {
+        public Box RootBox { get; set; } = null;
         public Type ComponentType { get; private set; }
         public string Name { get; private set; }
-        public string Text { get; set; }
-        public Position position { get; set; }
+        public string Text { get; private set; }
+        public Position position { get;private set; }
         public ConsoleColor Color { get; set; }
+        public int Layer { get; set; } = 0;
+
+
+        public bool Enabled { get; set; } = true;
+        public bool Visible { get; set; } = true;
 
         public bool AlwaysUpdate = false;
 
@@ -37,17 +43,85 @@ namespace danim
 
         public static T Find<T>(string name)
         {
+
             Component find = Root.CurrentRoot.CurrentPage.components.Find(x => x.Name == name);
 
-            if(find == null) { return default(T); }
+            if (find == null) { return default(T); }
             return (T)Convert.ChangeType(find, typeof(T));
-            
 
+        }
+
+        public void SetText(string value,bool isOverride = false)
+        {
+            
+            if(value == Text && isOverride == false) { return; }
+
+            if(ComponentType == typeof(Label))
+            {
+                value = value.Replace(Environment.NewLine, "");
+                if(RootBox != null)
+                {
+                    if (value.Length >= RootBox.Size.Width-1)
+                    {
+                        int multip = 1;
+                        while (true)
+                        {
+                            try
+                            {
+                                value = value.Insert(((RootBox.Size.Width) * multip)-1, Environment.NewLine);
+                                multip++;
+                            }
+                            catch
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (value.Length >= Root.CurrentRoot.Width)
+                    {
+                        int multip = 1;
+                        while (true)
+                        {
+                            try
+                            {
+                                value = value.Insert(((Root.CurrentRoot.Width) * multip) - 1, Environment.NewLine);
+                                multip++;
+                            }
+                            catch
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+            }
+            Root.CurrentRoot.ResetComponent(this);
+            this.Text = value;
+            
+        }
+
+        public void SetPosition(Position position)
+        {
+            if(this.position == position) { return; }
+            Root.CurrentRoot.ResetComponent(this);
+            this.position = position;
         }
 
         public Component Center()
         {
-            this.position = new Position(Root.CurrentRoot.Width / 2 - this.Text.Length/2, this.position.y);
+            if(RootBox != null)
+            {
+                this.position = new Position(RootBox.Size.Width / 2 - this.Text.Length / 2, this.position.y);
+            }
+            else
+            {
+                this.position = new Position(Root.CurrentRoot.Width / 2 - this.Text.Length / 2, this.position.y);
+            }
+            
             return this;
         }
 
@@ -65,8 +139,19 @@ namespace danim
 
         public Component Right()
         {
-            this.position = new Position(Root.CurrentRoot.Width-Text.Length, position.y);
+            if (RootBox != null)
+            {
+                this.position = new Position(RootBox.Size.Width - Text.Length-1, position.y);
+            }
+            else
+            {
+                this.position = new Position(Root.CurrentRoot.Width - Text.Length, position.y);
+                
+            }
+
             return this;
+
+
         }
 
         public Component Auto()
@@ -87,12 +172,20 @@ namespace danim
             UpdateBufferArea();
             Root.CurrentRoot.LastAddedComponent = this;
         }
-        public void UpdateBufferArea(int Extra = 0)
+        public void UpdateBufferArea(int Extra = 0,Position ExtraPosition = null)
         {
             BufferArea.Clear();
             for (int i = 0; i <= Text.Length+Extra; i++)
             {
-                BufferArea.Add(new Position(position.x + i, position.y));
+                if(ExtraPosition != null)
+                {
+                    BufferArea.Add(new Position(position.x + i, position.y)+ExtraPosition);
+                }
+                else
+                {
+                    BufferArea.Add(new Position(position.x + i, position.y));
+                }
+                
             }
         }
 

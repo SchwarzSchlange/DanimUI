@@ -30,22 +30,31 @@ namespace danim
             return Root.CurrentRoot.Pages.Find(x => x.PageName == Name);
         }
 
-        public void Load()
+        public async void Load()
         {
-            Console.Clear();
+         
+            Root.CurrentRoot.canUpdate = false;
             Root.CurrentRoot.CurrentPage = this;
             OnLoadEvent?.Invoke();
-            Console.Clear();
+            await Task.Delay(100);
+            Root.CurrentRoot.canUpdate = true;
         }
 
-        public void Add(Component component)
+
+        public void Add(params Component[] givencomponents)
         {
-            components.Add(component);
+            foreach(var comp in givencomponents)
+            {
+                components.Add(comp);
+            }
         }
 
         public void Delete(Component component)
         {
             components.Remove(component);
+            if(component.ComponentType == typeof(Box)) { Root.CurrentRoot.ResetComponent(component,true); }
+            else { Root.CurrentRoot.ResetComponent(component); }
+            
         }
 
         public delegate void OnLoad();
