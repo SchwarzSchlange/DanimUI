@@ -13,14 +13,20 @@ namespace danim
         public CheckBox(string name, Position position, string text, bool @checked) : base(name, position, typeof(CheckBox), "[] " + text, true, ConsoleColor.White)
         {
             Checked = @checked;
-
+            UpdateVisual();
             OnClickEvent += CheckBox_OnClickEvent;
         }
 
         private void CheckBox_OnClickEvent(object sender, ConsoleWindow.OnClickEventArgs e)
         {
             Checked = !Checked;
-            if(Checked == true)
+            UpdateVisual();
+            CheckboxChange?.Invoke(this);
+        }
+
+        private void UpdateVisual()
+        {
+            if (Checked == true)
             {
                 SetText(Text.Substring(2));
                 SetText("[*]" + Text);
@@ -30,7 +36,6 @@ namespace danim
                 SetText(Text.Substring(3));
                 SetText("[]" + Text);
             }
-            CheckboxChange?.Invoke(this);
         }
 
         public delegate void OnCheckboxChange(CheckBox checkBox);

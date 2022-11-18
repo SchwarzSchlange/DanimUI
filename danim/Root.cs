@@ -77,16 +77,18 @@ namespace danim
             }
         }
 
-
-        public void ShowMessage(string title,string content)
+        private int ActiveMessage = 0;
+        public async Task<bool> ShowMessage(string title,string content) // MESAJ LAYER : => 30
         {
-            if(CurrentPage == null) { return; }
+            bool isComplete = false;
+
+            if(CurrentPage == null) { return false; }
 
             Box AlertBox = new Box("AlertBox", new Position(0, Height/4), new Size(Width, Height / 2),title);
-            AlertBox.Layer = 30;
+            AlertBox.Layer = 30+ActiveMessage;
             
-            var contentLabel = new Label("content", new Position(1, 2), content, false);
-            var backbtn = new Button("backBtn", new Position(1,1), "x", true);
+            var contentLabel = new Label("content", new Position(1, 2), content);
+            var backbtn = new Button("backBtn", new Position(1,1), "x");
 
             AlertBox.Add(contentLabel,backbtn);
             backbtn.Right();
@@ -94,8 +96,22 @@ namespace danim
 
             backbtn.OnClickEvent +=  (object sender,ConsoleWindow.OnClickEventArgs args)=>{
                 CurrentPage.Delete(AlertBox);
+                ActiveMessage--;
+                isComplete = true;
             };
             CurrentPage.Add(AlertBox);
+            ActiveMessage++;
+
+            while(true)
+            {
+                if (isComplete) { return true; }
+                else
+                {
+                    await Task.Delay(1);
+                    continue;
+                }
+            }
+
         }
 
 
@@ -267,45 +283,30 @@ namespace danim
                     Console.BackgroundColor = ConsoleColor.Blue;
                     Input input = (Input)comp;
 
-                   
-                    int diff = Math.Abs(input.Width - input.Text.Length);
-                    if (diff > 0)
-                    {
-                        if(comp.RootBox == null)
-                        {
-                            Write(comp.position+new Position(input.Text.Length,0), new string(' ', diff));
-                        }
-                        else
-                        {
-                            Write(comp.position + comp.RootBox?.position +new Position(input.Text.Length, 0), new string(' ', diff));
-                        }
-                        
-                    }
-                    else
-                    {
-                        diff = 0;
-                    }
-
                     if (comp.RootBox != null)
                     {
 
+                        Write(comp.position + comp.RootBox?.position + new Position(input.Text.Length, 0), new string(' ', input.Width));
                         Write(comp.position + comp.RootBox.position, comp.Text);
 
 
                         if (comp.AlwaysUpdate)
                         {
-                            comp.UpdateBufferArea(diff, comp.RootBox.position);
+                            comp.UpdateBufferArea(input.Width-comp.Text.Length,comp.RootBox.position);
                         }
                     }
                     else
                     {
+
+                        Write(comp.position + new Position(input.Text.Length, 0), new string(' ', input.Width));
+
 
                         Write(comp.position, comp.Text);
 
 
                         if (comp.AlwaysUpdate)
                         {
-                            comp.UpdateBufferArea(diff);
+                            comp.UpdateBufferArea(input.Width - comp.Text.Length);
                         }
                     }
 

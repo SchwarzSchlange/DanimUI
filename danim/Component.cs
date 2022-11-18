@@ -68,7 +68,7 @@ namespace danim
                         {
                             try
                             {
-                                value = value.Insert(((RootBox.Size.Width) * multip)-1, Environment.NewLine);
+                                value = value.Insert(((RootBox.Size.Width) * multip-2), Environment.NewLine);
                                 multip++;
                             }
                             catch
@@ -171,7 +171,11 @@ namespace danim
 
             UpdateBufferArea();
             Root.CurrentRoot.LastAddedComponent = this;
+
+           
         }
+
+
         public void UpdateBufferArea(int Extra = 0,Position ExtraPosition = null)
         {
             BufferArea.Clear();

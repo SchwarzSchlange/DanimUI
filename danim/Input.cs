@@ -14,7 +14,7 @@ namespace danim
         public int StartIndex = 1;
        
 
-        public Input(string name, int width, Position position,bool UpdateBufferArea = true,string PlaceHolder = "") : base(name, position, typeof(Input), new string(' ',width),UpdateBufferArea, ConsoleColor.Gray)
+        public Input(string name, int width, Position position,string PlaceHolder = "") : base(name, position, typeof(Input), new string(' ',width),true, ConsoleColor.Gray)
         {
             this.Width = width;
             this.PlaceHolder = PlaceHolder;
